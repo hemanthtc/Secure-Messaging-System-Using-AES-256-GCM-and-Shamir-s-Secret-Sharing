@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="SecureShare Messenger - Configurable Message Fragmentation & Cryptographic Secret Sharing">
+  <meta name="theme-color" content="#059669">
+  <title>{% block title %}SecureShare Messenger{% endblock %}</title>
+
+  <!-- Typography & Stylesheets with Cache-Busting -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=20261013">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261013">
+  <script src="{{ url_for('static', filename='js/theme.js') }}?v=20261013"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <!-- Global Application Navbar -->
+  <header class="app-navbar">
+    <a href="{{ url_for('chat.index') }}" class="brand-container">
+      <div class="brand-icon">S</div>
+      <div>
+        <span class="brand-title">SecureShare</span>
+        <span class="brand-tag">Academic Edition</span>
+      </div>
+    </a>
+
+    <div class="nav-actions">
+      <!-- Theme Switcher -->
+      <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Theme" aria-label="Toggle Theme">
+        <span id="themeIcon">🌙</span>
+      </button>
+
+      {% if session.get('user_internal_id') %}
+        <a href="{{ url_for('chat.chat_view') }}" class="btn btn-secondary nav-link-btn" title="Messenger">Chats</a>
+        <a href="{{ url_for('profile.profile_view') }}" class="btn btn-secondary nav-link-btn" title="My Profile">Profile</a>
+        <a href="{{ url_for('settings.settings_view') }}" class="btn btn-secondary nav-link-btn" title="Settings">Settings</a>
+        <a href="{{ url_for('auth.logout_view') }}" class="btn btn-secondary nav-link-btn" title="Logout">Logout</a>
+      {% else %}
+        <a href="{{ url_for('auth.login_view') }}" class="btn btn-secondary nav-link-btn">Login</a>
+        <a href="{{ url_for('auth.signup_view') }}" class="btn btn-primary nav-link-btn">Sign Up</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Flash Notifications -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-notifications-wrap" style="max-width: 800px; margin: 0.5rem auto 0; padding: 0 1rem; flex-shrink: 0;">
+        {% for category, message in messages %}
+          <div class="alert-box alert-{{ 'error' if category == 'error' else 'success' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Content Block -->
+  {% block content %}{% endblock %}
+
+  <!-- Scripts with Cache-Busting -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/utils.js') }}?v=20261013"></script>
+  <script src="{{ url_for('static', filename='js/socket_client.js') }}?v=20261013"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

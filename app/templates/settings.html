@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - SecureShare Messenger{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <!-- 1. Secure Protocols Configuration (Moved from Chat Screen) -->
+  <div class="settings-card" id="secureProtocolsCard">
+    <h3>🛡️ Secure Protocols</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+      Configure deterministic message fragmentation, Shamir's Secret Sharing, and telemetry display preferences.
+    </p>
+
+    <form id="protocolSettingsForm">
+      <!-- Mode Selection: Automatic vs Custom -->
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" style="margin-bottom: 0.5rem;">Operational Protocol Mode</label>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; padding: 0.6rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-tertiary);">
+            <input type="radio" name="protocol_mode" value="automatic" id="modeAutomatic">
+            <strong>Automatic Mode</strong>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; padding: 0.6rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-tertiary);">
+            <input type="radio" name="protocol_mode" value="custom" id="modeCustom" checked>
+            <strong>Custom Mode</strong>
+          </label>
+        </div>
+        <div id="modeStatusBanner" style="margin-top: 0.75rem; padding: 0.65rem 0.9rem; border-radius: var(--radius-md); font-size: 0.85rem; line-height: 1.5;"></div>
+      </div>
+
+      <!-- Custom Mode Configuration Options -->
+      <div id="customControlsSection" style="padding: 1rem; background-color: var(--bg-tertiary); border: 1px solid var(--border-light); border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-primary);">Custom Protocol Parameters</h4>
+        
+        <!-- Fragment Count Selector -->
+        <div class="form-group">
+          <label class="form-label" for="custom_fragment_count">Message Fragment Count (N)</label>
+          <select id="custom_fragment_count" class="form-control" style="max-width: 200px;">
+            <option value="2">2 Fragments</option>
+            <option value="3" selected>3 Fragments (Default)</option>
+            <option value="4">4 Fragments</option>
+            <option value="5">5 Fragments</option>
+            <option value="6">6 Fragments</option>
+            <option value="7">7 Fragments</option>
+            <option value="8">8 Fragments</option>
+            <option value="9">9 Fragments</option>
+            <option value="10">10 Fragments</option>
+          </select>
+          <div class="form-text">Ciphertext payload will be deterministically divided into N ordered parts.</div>
+        </div>
+
+        <!-- Shamir Secret Sharing Toggle -->
+        <div class="form-group" style="margin-top: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <div style="font-weight: 600; font-size: 0.9rem;">Enable Shamir's Secret Sharing (SSS)</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Split 256-bit AES message key into threshold shares over prime field F_p.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="custom_is_sss_enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SSS Parameters: M and K -->
+        <div id="sssParametersGroup" style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-light);">
+          <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label" for="custom_sss_m">Total Shares (M)</label>
+              <select id="custom_sss_m" class="form-control" style="width: 140px;">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+              <div class="form-text">Require M &ge; 2.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <label class="form-label" for="custom_sss_k">Recovery Threshold (K)</label>
+              <select id="custom_sss_k" class="form-control" style="width: 140px;">
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+              <div class="form-text">Require 2 &le; K &le; M.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display & Privacy Toggles -->
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-primary);">Telemetry & Privacy Controls</h4>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+        <!-- Fragment Telemetry -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light);">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">Fragment Telemetry</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Display fragment count badge (e.g., "Fragments: 3") on message bubbles.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle_telemetry" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Fragment Reassembly Status -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light);">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">Fragment Reassembly Status</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Show live reassembly status badges and telemetry inspector.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle_reassembly_status" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Private Mode -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-primary);">Private Mode</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              UI privacy override: Hides fragment counts and status badges from chat interface while preserving full cryptographic security and clean delivery ticks.
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle_private_mode">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="saveProtocolsBtn">
+        Save Secure Protocol Settings
+      </button>
+    </form>
+  </div>
+
+  <!-- 2. Appearance Preferences -->
+  <div class="settings-card">
+    <h3>🎨 Appearance</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+      Customize theme and interface aesthetics. Preferences are saved automatically.
+    </p>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+      <div>
+        <div style="font-weight: 600; font-size: 0.95rem;">Interface Theme</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Toggle between dark and light color modes.</div>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="window.toggleTheme()">
+        <span id="themeSettingsLabel">Toggle Theme</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Security & Password Management -->
+  <div class="settings-card">
+    <h3>🔒 Security</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+      Manage password credentials. Passwords are protected using Argon2id memory-hard hashing.
+    </p>
+
+    <form id="changePasswordForm">
+      <div class="form-group">
+        <label class="form-label" for="current_password">Current Password</label>
+        <div class="password-input-wrapper">
+          <input type="password" id="current_password" class="form-control" required>
+          <button type="button" class="password-toggle-btn" aria-label="Show password" title="Show password">
+            <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="new_password">New Password</label>
+        <div class="password-input-wrapper">
+          <input type="password" id="new_password" class="form-control" minlength="8" required>
+          <button type="button" class="password-toggle-btn" aria-label="Show password" title="Show password">
+            <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="form-text">Must be at least 8 characters.</div>
+      </div>
+
+      <button type="submit" class="btn btn-secondary" style="margin-top: 0.5rem;">
+        Update Password
+      </button>
+    </form>
+  </div>
+
+  <!-- 4. Cryptographic Overview -->
+  <div class="settings-card">
+    <h3>🛡️ Cryptographic Architecture</h3>
+    <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-secondary);">
+      <p><strong>Message Encryption:</strong> AES-256-GCM authenticated cipher with 12-byte random nonces and 128-bit authentication tags.</p>
+      <p><strong>Configurable Fragmentation:</strong> Messages are divided into 2 to 10 parts. Plaintexts are reconstructed only after 100% of fragments pass integrity checks.</p>
+      <p><strong>Shamir's Secret Sharing:</strong> Polynomial interpolation over prime field \(\mathbb{F}_p\) (\(p = 2^{256} + 297\)) dividing 256-bit encryption keys into threshold shares.</p>
+      <p><strong>Database Backend:</strong> MongoDB Atlas cloud database storing user profiles, conversations, and ciphertext fragments.</p>
+    </div>
+  </div>
+
+  <!-- 5. Account Lifecycle & Deletion -->
+  <div class="settings-card" style="border-color: #fca5a5;">
+    <h3 style="color: #dc2626;">⚠️ Danger Zone: Account Deletion</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+      Permanently delete your account. This action is irreversible and executes a hard deletion cascade of your profile, sent messages, fragments, and active sessions.
+    </p>
+
+    <form id="deleteAccountForm">
+      <div class="form-group">
+        <label class="form-label" for="delete_confirm_password" style="color: #dc2626;">
+          Confirm Password to Permanently Delete Account:
+        </label>
+        <div class="password-input-wrapper">
+          <input
+            type="password"
+            id="delete_confirm_password"
+            class="form-control"
+            placeholder="Enter current password to confirm"
+            required
+          >
+          <button type="button" class="password-toggle-btn" aria-label="Show password" title="Show password">
+            <svg class="eye-icon eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-icon eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-danger">
+        Permanently Delete My Account
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const protocolForm = document.getElementById("protocolSettingsForm");
+  const modeAutoRadio = document.getElementById("modeAutomatic");
+  const modeCustomRadio = document.getElementById("modeCustom");
+  const customControls = document.getElementById("customControlsSection");
+  const sssToggle = document.getElementById("custom_is_sss_enabled");
+  const sssParamsGroup = document.getElementById("sssParametersGroup");
+  const sssMSelect = document.getElementById("custom_sss_m");
+  const sssKSelect = document.getElementById("custom_sss_k");
+  const fragCountSelect = document.getElementById("custom_fragment_count");
+  const telemetryToggle = document.getElementById("toggle_telemetry");
+  const reassemblyToggle = document.getElementById("toggle_reassembly_status");
+  const privateModeToggle = document.getElementById("toggle_private_mode");
+
+  // Toggle Custom Mode Controls Visibility & Show Active Banner
+  function updateModeUI() {
+    const isAuto = modeAutoRadio.checked;
+    const banner = document.getElementById("modeStatusBanner");
+    if (isAuto) {
+      customControls.style.opacity = "0.55";
+      customControls.style.pointerEvents = "none";
+      if (banner) {
+        banner.style.backgroundColor = "var(--accent-subtle)";
+        banner.style.color = "var(--accent-primary)";
+        banner.style.border = "1px solid var(--accent-primary)";
+        banner.innerHTML = "<strong>⚡ Automatic Mode Active:</strong> For each outgoing message, valid fragment count (2–10) and SSS parameters are chosen dynamically using cryptographically secure randomness. The custom values below are ignored while in Automatic Mode.";
+      }
+    } else {
+      customControls.style.opacity = "1";
+      customControls.style.pointerEvents = "auto";
+      if (banner) {
+        banner.style.backgroundColor = "var(--bg-tertiary)";
+        banner.style.color = "var(--text-secondary)";
+        banner.style.border = "1px solid var(--border-light)";
+        banner.innerHTML = "<strong>🛠️ Custom Mode Active:</strong> Your explicit parameters configured below will be applied to all outgoing messages.";
+      }
+    }
+  }
+
+  modeAutoRadio.addEventListener("change", updateModeUI);
+  modeCustomRadio.addEventListener("change", updateModeUI);
+
+  // Toggle SSS M/K Visibility
+  sssToggle.addEventListener("change", () => {
+    sssParamsGroup.style.display = sssToggle.checked ? "block" : "none";
+  });
+
+  // Ensure K <= M
+  function updateKOptions() {
+    const m = parseInt(sssMSelect.value, 10);
+    const currentK = parseInt(sssKSelect.value, 10);
+    sssKSelect.innerHTML = "";
+    for (let k = 2; k <= m; k++) {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = k;
+      if (k === currentK || (currentK > m && k === m)) {
+        opt.selected = true;
+      }
+      sssKSelect.appendChild(opt);
+    }
+  }
+
+  sssMSelect.addEventListener("change", updateKOptions);
+
+  // Load Initial Protocol Settings
+  try {
+    const res = await Utils.apiFetch("/api/settings/protocols");
+    if (res.success && res.protocols) {
+      const p = res.protocols;
+      if (p.mode === "automatic") {
+        modeAutoRadio.checked = true;
+      } else {
+        modeCustomRadio.checked = true;
+      }
+      updateModeUI();
+
+      fragCountSelect.value = p.fragment_count || 3;
+      sssToggle.checked = Boolean(p.is_sss_enabled);
+      sssParamsGroup.style.display = p.is_sss_enabled ? "block" : "none";
+      sssMSelect.value = p.sss_total_shares_m || 5;
+      updateKOptions();
+      sssKSelect.value = p.sss_threshold_k || 3;
+
+      telemetryToggle.checked = Boolean(p.fragment_telemetry !== false);
+      reassemblyToggle.checked = Boolean(p.fragment_reassembly_status !== false);
+      privateModeToggle.checked = Boolean(p.private_mode);
+    }
+  } catch (err) {
+    console.error("Failed to load protocol settings:", err);
+  }
+
+  // Handle Protocol Settings Submission
+  if (protocolForm) {
+    protocolForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        mode: modeAutoRadio.checked ? "automatic" : "custom",
+        fragment_count: parseInt(fragCountSelect.value, 10),
+        is_sss_enabled: sssToggle.checked,
+        sss_threshold_k: parseInt(sssKSelect.value, 10),
+        sss_total_shares_m: parseInt(sssMSelect.value, 10),
+        fragment_telemetry: telemetryToggle.checked,
+        fragment_reassembly_status: reassemblyToggle.checked,
+        private_mode: privateModeToggle.checked,
+      };
+
+      try {
+        const res = await Utils.apiFetch("/api/settings/protocols", {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+        if (res.success) {
+          Utils.showToast("Secure Protocol settings saved successfully!", "success");
+        }
+      } catch (err) {
+        Utils.showToast(err.message, "error");
+      }
+    });
+  }
+
+  // Password & Account Deletion Handlers
+  const pwdForm = document.getElementById("changePasswordForm");
+  const deleteForm = document.getElementById("deleteAccountForm");
+
+  if (pwdForm) {
+    pwdForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const currentPwd = document.getElementById("current_password").value;
+      const newPwd = document.getElementById("new_password").value;
+
+      try {
+        const res = await Utils.apiFetch("/api/settings/password", {
+          method: "POST",
+          body: JSON.stringify({
+            current_password: currentPwd,
+            new_password: newPwd,
+          }),
+        });
+        if (res.success) {
+          Utils.showToast("Password updated successfully!", "success");
+          pwdForm.reset();
+        }
+      } catch (err) {
+        Utils.showToast(err.message, "error");
+      }
+    });
+  }
+
+  if (deleteForm) {
+    deleteForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById("delete_confirm_password").value;
+
+      if (!confirm("Are you absolutely sure you want to permanently delete your account? All messages and fragments will be erased.")) {
+        return;
+      }
+
+      try {
+        const res = await Utils.apiFetch("/api/settings/account", {
+          method: "POST",
+          body: JSON.stringify({
+            confirmation_password: pwd,
+          }),
+        });
+        if (res.success) {
+          alert("Account permanently deleted.");
+          window.location.href = "{{ url_for('auth.login_view') }}";
+        }
+      } catch (err) {
+        Utils.showToast(err.message, "error");
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

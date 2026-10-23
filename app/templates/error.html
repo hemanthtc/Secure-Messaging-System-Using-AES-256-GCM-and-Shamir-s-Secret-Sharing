@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Error - SecureShare Messenger{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+  <div class="auth-card" style="text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+    <h2 style="font-size: 1.5rem; margin-bottom: 0.75rem;">Notice</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+      {{ error_message or "An unexpected issue occurred while processing your request." }}
+    </p>
+    <a href="{{ url_for('chat.index') }}" class="btn btn-primary">
+      Return to Home
+    </a>
+  </div>
+</div>
+{% endblock %}

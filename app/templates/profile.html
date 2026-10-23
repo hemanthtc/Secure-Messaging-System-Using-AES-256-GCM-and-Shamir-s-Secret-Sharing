@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - SecureShare Messenger{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <div class="settings-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="avatar" style="width: 56px; height: 56px; font-size: 1.5rem;">
+          {{ user.display_name[:1].upper() }}
+        </div>
+        <div>
+          <h2 style="font-size: 1.4rem; font-weight: 700;">{{ user.display_name }}</h2>
+          <div style="color: var(--text-muted); font-size: 0.9rem;">@{{ user.public_user_id }}</div>
+        </div>
+      </div>
+
+      {% if not is_public_view %}
+        <button id="copyProfileLinkBtn" class="btn btn-secondary">
+          🔗 Copy Profile Link
+        </button>
+      {% endif %}
+    </div>
+
+    {% if is_public_view %}
+      <!-- Public Profile Badge View -->
+      <div style="background-color: var(--bg-tertiary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin-top: 1rem;">
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          You are viewing <strong>{{ user.display_name }}</strong>'s public profile on SecureShare Messenger.
+        </p>
+        <a href="{{ url_for('auth.login_view') }}" class="btn btn-primary">
+          Log In or Register to Chat
+        </a>
+      </div>
+    {% else %}
+      <!-- Editable Profile Form -->
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="edit_display_name">Display Name</label>
+          <input
+            type="text"
+            id="edit_display_name"
+            class="form-control"
+            value="{{ user.display_name }}"
+            required
+          >
+          <div class="form-text">Your name as displayed to contacts in chat headers and message bubbles.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit_public_user_id">Public User ID</label>
+          <input
+            type="text"
+            id="edit_public_user_id"
+            class="form-control"
+            value="{{ user.public_user_id }}"
+            pattern="[a-zA-Z0-9_]{3,30}"
+            required
+          >
+          <div class="form-text">
+            Unique public ID used by other users to search and initiate chats.
+            Modifying your public ID preserves your permanent internal ID and all existing conversations.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Permanent Internal ID</label>
+          <input
+            type="text"
+            class="form-control mono"
+            value="{{ user.internal_id }}"
+            readonly
+            disabled
+            style="background-color: var(--bg-tertiary); opacity: 0.8;"
+          >
+          <div class="form-text">Immutable system identifier linking database relationships.</div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary">Save Profile Changes</button>
+          <a href="{{ url_for('chat.chat_view') }}" class="btn btn-secondary">Back to Chats</a>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if not is_public_view %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const profileForm = document.getElementById("profileForm");
+  const copyBtn = document.getElementById("copyProfileLinkBtn");
+
+  if (copyBtn) {
+    copyBtn.addEventListener("click", () => {
+      const publicId = document.getElementById("edit_public_user_id").value.trim();
+      const profileUrl = `${window.location.origin}/u/${publicId}`;
+      Utils.copyToClipboard(profileUrl, "Profile link copied to clipboard!");
+    });
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const displayName = document.getElementById("edit_display_name").value.trim();
+      const publicUserId = document.getElementById("edit_public_user_id").value.trim();
+
+      try {
+        const res = await Utils.apiFetch("/api/profile", {
+          method: "PUT",
+          body: JSON.stringify({
+            display_name: displayName,
+            public_user_id: publicUserId,
+          }),
+        });
+        if (res.success) {
+          Utils.showToast("Profile updated successfully!", "success");
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      } catch (err) {
+        Utils.showToast(err.message, "error");
+      }
+    });
+  }
+});
+</script>
+{% endif %}
+{% endblock %}
